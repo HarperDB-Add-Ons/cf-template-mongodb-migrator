@@ -1,0 +1,163 @@
+<div class="mx-auto w-3/4 text-sm breadcrumbs pl-3 mt-2">
+  <ul>
+    <li><a [routerLink]="['/']">Home</a></li> 
+    <li>Job Detail</li>
+  </ul>
+</div>
+<div class="mt-2 card w-3/4 bg-base-200 shadow-xl mx-auto">
+  <div
+    *ngIf="this.historyState.loading"
+    class="card-body"
+  >
+    <app-spinner></app-spinner>
+  </div>
+  <div
+    class="p-4"
+    *ngIf="(!this.historyState.loading && !historyState.jobDetail.job) || this.historyState.jobLoadError"
+  >
+    Error loading job.
+  </div>
+  <div
+    *ngIf="!this.historyState.loading && historyState.jobDetail.job"
+    class="card-body p-4"
+  >
+    <div class="overflow-x-auto">
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <h2 class="text-xl">Details</h2>
+          <table class="table table-compact w-full">
+            <tbody>
+              <tr>
+                <th>Status</th>
+                <td class="flex items-center gap-2">
+                  {{ historyState.jobDetail.job.status | titlecase }}
+                  <button
+                    class="btn btn-sm btn-primary tooltip tooltip-top"
+                    data-tip="Pause Job"
+                    *ngIf="['online', 'pending'].includes(historyState.jobDetail.job.status)"
+                    (click)="sendJobAction('stop')"
+                    [disabled]="historyState.loading"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+                    </svg>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-primary tooltip tooltip-top"
+                    data-tip="Start Job"
+                    *ngIf="['stopped', 'error'].includes(historyState.jobDetail.job.status)"
+                    (click)="sendJobAction('start')"
+                    [disabled]="historyState.loading"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                    </svg>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-secondary tooltip tooltip-top"
+                    data-tip="Refresh Job"
+                    (click)="refreshJob()"
+                    [disabled]="historyState.loading"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" [ngClass]="{'animate-spin': isRefreshing}">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    </svg>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-accent tooltip tooltip-top"
+                    data-tip="Delete Job"
+                    (click)="deleteJob()"
+                    [disabled]="historyState.loading"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <th>Mongo Host</th>
+                <td>{{ historyState.jobDetail.job.uri }}</td>
+              </tr>
+              <tr>
+                <th>Date Created</th>
+                <td>
+                  {{ historyState.jobDetail.job.__createdtime__ | date:'medium' }} 
+                  ({{ tsAsDate(historyState.jobDetail.job.__createdtime__) | timeAgo }})
+                </td>
+              </tr>
+              <tr>
+                <th>Source → Target</th>
+                <td>
+                  <span class="block" *ngFor="let config of historyState.jobDetail.job.configuration">
+                    {{ config.source.database }}.{{ config.source.collection }} →	{{ config.target.schema }}.{{ config.target.table }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h2 class="text-xl">Analytics</h2>
+          <table class="table table-compact w-full">
+            <tbody>
+              <tr>
+                <th>Source Record Count</th>
+                <td class="text-center">
+                  {{ sourceRecordCount }}
+                </td>
+              </tr>
+              <tr>
+                <th>Records Transferred</th>
+                <td class="text-center">
+                  {{ recordsTransferred }}
+                </td>
+              </tr>
+              <tr>
+                <th>Avg. Transfer Rate</th>
+                <td class="text-center">
+                  {{ historyState.jobDetail.analytics.transferRate }}
+                  <ng-container *ngIf="hasTransferRate">
+                    records/second
+                  </ng-container>
+                </td>
+              </tr>
+              <tr>
+                <th>Last Start</th>
+                <td class="text-center">
+                  <ng-container *ngIf="hasLastStart; else elseBlock">
+                    {{ historyState.jobDetail.analytics.lastStart | date:'medium' }}
+                    ({{ tsAsDate(historyState.jobDetail.analytics.lastStart) | timeAgo }})
+                  </ng-container>
+                  <ng-template #elseBlock>
+                    ---
+                  </ng-template>
+                </td>
+              </tr>
+              <tr>
+                <th>Errors Encountered</th>
+                <td class="text-center">
+                  {{ historyState.jobDetail.analytics.errorsEncountered.toLocaleString() }}
+                </td>
+              </tr>
+              <tr>
+                <th>PM2 PID</th>
+                <td class="text-center">
+                  <div *ngIf="jobIsOnline; else elseBlock">
+                    {{ jobPID }}
+                  </div>
+                  <ng-template #elseBlock>---</ng-template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <h2 class="text-xl">
+      Logs
+      <span class="text-xs">(last 1000)</span>
+    </h2>
+    <pre class="p-2 bg-base-300 rounded-md log-wrapper"><code *ngIf="historyState.jobDetail.logs">{{ logs }}</code></pre>
+  </div>
+</div>

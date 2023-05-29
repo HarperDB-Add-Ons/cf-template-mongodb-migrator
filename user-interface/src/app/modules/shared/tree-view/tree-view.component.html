@@ -1,0 +1,56 @@
+<p class="text-center" *ngIf="!loadingAttribute && !dataAttribute.length">
+  No {{ dataLabel }} found.
+</p>
+
+<app-spinner *ngIf="loadingAttribute"></app-spinner>
+
+<div class="max-h-96 overflow-y-auto">
+  <ul class="mt-1">
+    <li *ngFor="let parent of dataAttribute" class="mt-1">
+      <div class="form-control">
+        <label class="cursor-pointer flex align-middle gap-2">
+          <input
+            (change)="onParentSelect(parent, $event)"
+            [checked]="parent.selected === 'all'"
+            [indeterminate]="parent.selected === 'some'"
+            type="checkbox"
+            class="checkbox" 
+          />
+          <span class="">
+            {{ parent.name }}
+            <div class="inline-flex gap-1">
+              <div class="badge badge-secondary badge-outline">{{ parent.size }}</div>
+              <div class="badge badge-info badge-outline">{{ getParentCount(parent).toLocaleString() }} documents</div>
+            </div>
+          </span>
+        </label>
+      </div>
+  
+      <!-- Children -->
+      <ng-container *ngIf="parent.children?.length">
+        <ul class="ml-7 mt-1">
+          <li *ngFor="let child of parent.children" class="mt-1">
+            <div class="form-control">
+              <label class="cursor-pointer flex align-middle gap-2">
+                <input
+                  (change)="onChildSelect(child, parent)"
+                  [checked]="child.selected"
+                  type="checkbox"
+                  class="checkbox" 
+                />
+                <span class="">
+                  {{ child.name }}
+                  <div class="inline-flex gap-1">
+                    <div class="badge badge-secondary badge-outline">{{ child.size }}</div>
+                    <div class="badge badge-info badge-outline">{{ child.count.toLocaleString() }} documents</div>
+                  </div>
+                </span>
+              </label>
+            </div>
+          </li>
+        </ul>
+      </ng-container>
+    </li>
+  </ul>
+  
+</div>

@@ -1,0 +1,76 @@
+<div class="mx-auto w-3/4 text-sm breadcrumbs pl-3 mt-2">
+  <ul>
+    <li>Home</li> 
+  </ul>
+</div>
+<div class="mx-auto mt-2">
+  <ng-container *ngIf="historyState.loading">
+    <app-spinner></app-spinner>
+  </ng-container>
+  <ng-container *ngIf="!historyState.loading">
+    <div class="card w-3/4 bg-base-300 shadow-xl mx-auto">
+      <div class="card-body p-2">
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <!-- head -->
+            <thead>
+              <tr>
+                <th></th>
+                <th>Source → Target</th>
+                <th>Date Created</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="!this.historyState.history.length">
+                <td colspan="4" class="text-center">
+                  No existing migrations found, create one below.
+                </td>
+              </tr>
+              <tr
+                *ngFor="let job of this.historyState.history"
+              >
+                <th>
+                  <a
+                    class="underline"
+                    [routerLink]="['/', 'job', job.id]"
+                  >
+                    {{ job.id.substr(job.id.length - 5, 5) }}
+                  </a>
+                </th>
+                <td>
+                  <span class="block" *ngFor="let config of job.configuration">
+                    {{ config.source.database }}.{{ config.source.collection }} →	{{ config.target.schema }}.{{ config.target.table }}
+                  </span>
+                </td>
+                <td>{{ job.__createdtime__ | date:'medium' }}</td>
+                <td>
+                  <div
+                    class="badge"
+                    [ngClass]="{
+                      'badge-secondary': job.status === 'online',
+                      'badge-error': job.status === 'error',
+                      'badge-primary': job.status === 'stopped'
+                    }"
+                  >
+                    {{ job.status | titlecase }}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- end table -->
+    </ng-container>
+    <div class="divider w-1/2 mx-auto my-10">OR</div>
+    <div class="text-center">
+      <a routerLink="/job/new" class="btn btn-info gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Create a new Migration Job
+      </a>
+    </div>
+</div>

@@ -1,0 +1,14 @@
+{
+  "name": "mongodb-harperdb-migrator",
+  "version": "1.0.0",
+  "description": "This repository provides a migration tool to sync records from an existing MongoDB database to HarperDB. Configurable on a collection-by-collection basis, you can automatically and consistently sync records to your desired schemas and tables.",
+  "main": "nil.js",
+  "scripts": {
+    "run:deps": "bash ./scripts/install-deps.sh",
+    "run:pre-build": "bash ./scripts/pre-build.sh",
+    "run:build": "bash ./scripts/build.sh",
+    "build": "yarn run:deps && yarn run:pre-build && yarn run:build"
+  },
+  "author": "Michael King <@makvoid>",
+  "license": "MIT"
+}

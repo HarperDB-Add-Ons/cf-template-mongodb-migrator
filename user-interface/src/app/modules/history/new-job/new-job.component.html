@@ -1,0 +1,264 @@
+<div class="mx-auto w-3/4 text-sm breadcrumbs pl-3 mt-2">
+  <ul>
+    <li><a [routerLink]="['/']">Home</a></li> 
+    <li>Create New Job</li>
+  </ul>
+</div>
+<div class="text-center">
+  <ul class="steps">
+    <li
+      class="step step-success"
+    >
+      Source Connection
+    </li>
+    <li
+      [ngClass]="{'step-success': stepNumber >= 2}"
+      class="step"
+    >
+      Source
+    </li>
+    <li 
+      [ngClass]="{'step-success': stepNumber >= 3}"
+      class="step"
+    >
+      HarperDB Credentials
+    </li>
+    <li
+      [ngClass]="{'step-success': stepNumber >= 4}"
+      class="step"
+    >
+      Target
+    </li>
+  </ul>
+</div>
+
+<div class="card w-3/4 bg-base-200 shadow-xl mx-auto mt-5">
+  <div class="card-body">
+    <form [formGroup]="form">
+      <!-- Step 1 -->
+      <div *ngIf="stepNumber === 1">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">
+              MongoDB Connection URI
+              <span class="text-red-600">*</span>
+            </span>
+          </label>
+          <input
+            [ngClass]="{'input-error': !isControlValid('uri')}"
+            formControlName="uri"
+            type="text"
+            placeholder="mongodb://user:pass@mongodb..."
+            class="input input-bordered" 
+            autofocus
+            (keyup.enter)="setStep(stepNumber + 1)"
+          />
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div *ngIf="stepNumber === 2">
+        <app-tree-view
+          [loadingAttribute]="historyState.loading"
+          [dataAttribute]="historyState.structure"
+          [dataLabel]="'databases/collections'"
+          #treeView
+        ></app-tree-view>
+      </div>
+      
+      <!-- Step 3 -->
+      <div *ngIf="stepNumber === 3" formGroupName="credentials">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">
+              Username
+              <span class="text-red-600">*</span>
+            </span>
+          </label>
+          <input
+            [ngClass]="{'input-error': !isControlValid('username', form.controls['credentials'])}"
+            formControlName="username"
+            type="text"
+            placeholder="HDB_ADMIN"
+            class="input input-bordered" 
+            autofocus
+            autocomplete="off"
+            (keyup.enter)="setStep(stepNumber + 1)"
+          />
+        </div>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">
+              Password
+              <span class="text-red-600">*</span>
+            </span>
+          </label>
+          <input
+            [ngClass]="{'input-error': !isControlValid('password', form.controls['credentials'])}"
+            formControlName="password"
+            type="password"
+            placeholder="Password"
+            class="input input-bordered" 
+            (keyup.enter)="setStep(stepNumber + 1)"
+          />
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div *ngIf="stepNumber === 4">
+        <app-spinner *ngIf="historyState.loading"></app-spinner>
+        <div *ngIf="!historyState.loading" class="overflow-x-auto">
+          <table class="table table-zebra w-full bg-gray-800">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Database Name</th>
+                <th>Collection Name</th>
+                <th>Schema Name</th>
+                <th>Table Name</th>
+              </tr>
+            </thead>
+            <tbody formArrayName="targets">
+              <tr *ngFor="let targetForm of targets.controls; let i = index">
+                <ng-container [formGroupName]="i">
+                  <th>{{ i + 1 }}</th>
+                  <td>
+                    <ng-container *ngIf="i > 0">
+                      <ng-container *ngIf="targetReference[i].database === targetReference[i-1].database">
+                        <span class="text-muted">{{ targetReference[i].database }}</span>
+                      </ng-container>
+                      <ng-container *ngIf="targetReference[i].database !== targetReference[i-1].database">
+                        targetReference[i].database
+                      </ng-container>
+                    </ng-container>
+                    <ng-container *ngIf="i === 0">
+                      {{ targetReference[i].database }}
+                    </ng-container>
+                  </td>
+                  <td>{{ targetReference[i].collection }}</td>
+                  <td>
+                    <select
+                      formControlName="schema"
+                      (change)="onSelectChange('Schema', $event, i)"
+                      class="select select-bordered w-full max-w-xs block"
+                      [ngClass]="{'select-error': !isSelectValid('Schema', i)}"
+                    >
+                      <option disabled selected>Schema Name</option>
+                      <option
+                        *ngFor="let schema of getSchemas()"
+                        [value]="schema"
+                      >
+                        {{ schema }}
+                      </option>
+                      <option>+ Create New</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select
+                      formControlName="table"
+                      (change)="onSelectChange('Table', $event, i)"
+                      [disabled]="isSelectedDisabled(i)"
+                      class="select select-bordered w-full max-w-xs"
+                      [ngClass]="{'select-error': !isSelectValid('Table', i)}"
+                    >
+                      <option disabled selected>Table Name</option>
+                      <option
+                        *ngFor="let table of getTables(i)"
+                        [value]="table"
+                      >
+                        {{ table }}
+                      </option>
+                      <option>+ Create New</option>
+                    </select>
+                  </td>
+                </ng-container>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div *ngIf="stepNumber === 5">
+        step 5
+      </div>
+    </form>
+
+    <!-- Bottom row -->
+    <div class="grid grid-cols-4 mt-3">
+      <div class="flex items-end">
+        <button *ngIf="stepNumber > 1" (click)="setStep(stepNumber - 1)" class="btn btn-info">
+          Back
+        </button>
+      </div>
+      <div class="text-center col-span-2">
+        <app-alert [params]="alertParams"></app-alert>
+      </div>
+      <div class="flex items-end justify-end">
+        <button
+          [disabled]="stepChangeDisabled"
+          *ngIf="stepNumber < 4"
+          (click)="setStep(stepNumber + 1)"
+          class="btn btn-info"
+        >
+          Next
+        </button>
+        <button
+          [disabled]="stepChangeDisabled"
+          *ngIf="stepNumber === 4"
+          (click)="showConfirmation()"
+          class="btn btn-info"
+        >
+          Finish
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Schema/Table (Entity) modal -->
+<app-modal
+  #entityModal
+  [title]="getModalTitle()"
+  [bodyTemplate]="entityBodyTemplate"
+  [footerTemplate]="entityFooterTemplate"
+  (onClose)="onEntityModalClose()"
+  (onOpen)="onEntityModalOpen()"
+></app-modal>
+<!-- Modal templates -->
+<ng-template #entityFooterTemplate>
+  <button
+    type="button"
+    class="btn btn-info"
+    (click)="onModalSubmit()"
+  >
+    Add {{ modalMode }}
+  </button>
+  <button
+    type="button"
+    (click)="this.entityModal.hide()"
+    class="btn"
+  >
+    Close
+  </button>
+</ng-template>
+<ng-template #entityBodyTemplate [formGroup]="entityModalForm">
+  <div class="form-control">
+    <label class="label">
+      <span class="label-text">
+        {{ modalMode }} Name
+        <span class="text-red-600">*</span>
+      </span>
+    </label>
+    <input
+      [ngClass]="{'input-error': !isControlValid('name', entityModalForm)}"
+      formControlName="name"
+      type="text"
+      placeholder="Name"
+      class="input input-bordered"
+    />
+  </div>
+  <div class="mt-1">
+    <app-alert [params]="entityModalAlertParams"></app-alert>
+  </div>
+</ng-template>
